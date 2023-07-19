@@ -1,0 +1,1 @@
+# rug-pull-contract
