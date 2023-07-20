@@ -1,45 +1,5 @@
 // SPDX-License-Identifier: MIT
-
-pragma solidity ^0.8.16;
-
-interface IERC20 {
-    function decimals() external view returns (uint8);
-
-    function symbol() external view returns (string memory);
-
-    function name() external view returns (string memory);
-
-    function totalSupply() external view returns (uint256);
-
-    function balanceOf(address account) external view returns (uint256);
-
-    function transfer(address recipient, uint256 amount) external returns (bool);
-
-    function allowance(address owner, address spender) external view returns (uint256);
-
-    function approve(address spender, uint256 amount) external returns (bool);
-
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-interface ISwapRouter {
-    function factory() external pure returns (address);
-
-    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
-        uint amountIn,
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external;
-}
-
-interface ISwapFactory {
-    function createPair(address tokenA, address tokenB) external returns (address pair);
-}
+pragma solidity ^0.8.0;
 
 abstract contract Ownable {
     address internal _owner;
@@ -71,6 +31,38 @@ abstract contract Ownable {
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
     }
+}
+
+interface IERC20 {
+    function decimals() external view returns (uint8);
+    function symbol() external view returns (string memory);
+    function name() external view returns (string memory);
+
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+    function transfer(address recipient, uint256 amount) external returns (bool);
+    function allowance(address owner, address spender) external view returns (uint256);
+    function approve(address spender, uint256 amount) external returns (bool);
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+interface ISwapRouter {
+    function factory() external pure returns (address);
+
+    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external;
+}
+
+interface ISwapFactory {
+    function createPair(address tokenA, address tokenB) external returns (address pair);
 }
 
 interface ISwapPair {
@@ -139,7 +131,7 @@ abstract contract AbsToken is IERC20, Ownable {
     //最近计算复利的时间
     uint256 public _lastRewardTime;
     //是否启用自动复利
-    bool public _autoApy;
+    bool public _autoCI;
     //邀请人即上级发放奖励的持币条件，0表示不需要持币也能发放邀请奖励
     uint256 public _invitorHoldCondition;
 
@@ -199,9 +191,9 @@ abstract contract AbsToken is IERC20, Ownable {
     }
 
     //计算复利逻辑方法，该方法可手动调用
-    function calApy() public {
+    function calCI() public {
         //未开启自动复利
-        if (!_autoApy) {
+        if (!_autoCI) {
             return;
         }
         //当前代币实际总量
@@ -320,7 +312,7 @@ abstract contract AbsToken is IERC20, Ownable {
         uint256 amount
     ) private {
         //每笔转账之前，都先计算一下复利
-        calApy();
+        calCI();
 
         uint256 balance = balanceOf(from);
         //余额不足，这里一般是配合dapp使用的
@@ -601,26 +593,26 @@ abstract contract AbsToken is IERC20, Ownable {
     }
 
     //开放自动复利
-    function startAutoApy() external onlyOwner {
-        require(!_autoApy, "autoAping");
-        _autoApy = true;
+    function startAutoCI() external onlyOwner {
+        require(!_autoCI, "autoAping");
+        _autoCI = true;
         _lastRewardTime = block.timestamp;
     }
 
     //紧急关闭自动复利
-    function emergencyCloseAutoApy() external onlyOwner {
-        _autoApy = false;
+    function emergencyCloseAutoCI() external onlyOwner {
+        _autoCI = false;
     }
 
     //关闭自动复利，关闭之前先计算之前未计算的复利
-    function closeAutoApy() external onlyOwner {
-        calApy();
-        _autoApy = false;
+    function closeAutoCI() external onlyOwner {
+        calCI();
+        _autoCI = false;
     }
 
     //修改15分钟利率，分母为100000000
     function setApr15Minutes(uint256 apr) external onlyOwner {
-        calApy();
+        calCI();
         apr15Minutes = apr;
     }
 
@@ -659,24 +651,19 @@ abstract contract AbsToken is IERC20, Ownable {
     }
 }
 
-contract AutoApy is AbsToken {
+contract HoldAutoCI is AbsToken {
     constructor() AbsToken(
-        address(0x10ED43C718714eb63d5aA57B78B54704E256024E),
-        address(0x55d398326f99059fF775485246999027B3197955),
-    //名称
-        "AutoApy",
-    //符号
-        "AutoApy",
-    //精度
-        6,
-    //总量 2亿
-        200000000,
-    //代币接收钱包
-        address(0x357341b67BeDb447603f01eb87a6296Ed8dffFc8),
-    //营销地址
-        address(0x2aD9ce1afc4d6f1789aeEa88827d5d1dAcE40FdA),
-    //营销地址1
-        address(0x5dE4dDcf031C3c0c639cf0528a160e4c3b93C33E)
+      address(0x10ED43C718714eb63d5aA57B78B54704E256024E),
+      address(0x55d398326f99059fF775485246999027B3197955),
+      
+      "AutoCI", //名称
+      "AutoCI", //符号
+      6,        //精度
+      200000000,//总量
+
+      address(0x357341b67BeDb447603f01eb87a6296Ed8dffFc8),  //代币接收钱包
+      address(0x2aD9ce1afc4d6f1789aeEa88827d5d1dAcE40FdA),  //营销地址
+      address(0x5dE4dDcf031C3c0c639cf0528a160e4c3b93C33E)   //营销地址1
     ){
 
     }
