@@ -16,7 +16,7 @@
 
 **项目地址：**
 
-https://github.com/binschoolapp/rug-pull-contract/blob/main/ERC20/HoldAutoCI.sol
+https://github.com/binschoolapp/rug-pull-contract/blob/main/HoldAutoCI.sol
 
 ## 2. AddUsdtLP，回流USDT池子
 
