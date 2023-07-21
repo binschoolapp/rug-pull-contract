@@ -15,8 +15,7 @@
 - 营销钱包分U
 
 **项目地址：**
-
-https://github.com/binschoolapp/rug-pull-contract/blob/main/HoldAutoCI.sol
+https://github.com/binschoolapp/rug-pull-contract/blob/main/99-Template/HoldAutoCI.sol
 
 ## 2. AddUsdtLP，回流USDT池子
 
@@ -26,7 +25,7 @@ https://github.com/binschoolapp/rug-pull-contract/blob/main/HoldAutoCI.sol
 
 **项目地址：**
 
-https://github.com/binschoolapp/rug-pull-contract/blob/main/AddUsdtLP.sol
+https://github.com/binschoolapp/rug-pull-contract/blob/main/99-Template/AddUsdtLP.sol
 
 ## 3. HoldDividendBNB，持币分红 BNB
 
@@ -40,7 +39,7 @@ https://github.com/binschoolapp/rug-pull-contract/blob/main/AddUsdtLP.sol
 
 **项目地址：**
 
-https://github.com/binschoolapp/rug-pull-contract/blob/main/HoldDividendBNB.sol
+https://github.com/binschoolapp/rug-pull-contract/blob/main/99-Template/HoldDividendBNB.sol
 
 ## 4. RebaseDividendToken，Rebase 分红本币
 
@@ -54,7 +53,7 @@ https://github.com/binschoolapp/rug-pull-contract/blob/main/HoldDividendBNB.sol
 
 **项目地址：**
 
-https://github.com/binschoolapp/rug-pull-contract/blob/main/RebaseDividend.sol
+https://github.com/binschoolapp/rug-pull-contract/blob/main/99-Template/RebaseDividend.sol
 
 ## 5. LPDividendUsdt，加LP分红
 
