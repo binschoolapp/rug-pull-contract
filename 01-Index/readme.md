@@ -3,7 +3,7 @@
 本章讲解 **土狗合约** 的基本知识，识别土狗的欺诈手段汇总，掌握反欺诈的常用方法。
 
 **视频**：[Bilibili](#)  |  [Youtube](#)
-<p align="center"><img src="./img/solidity-basic-v1.png" align="middle" /></p>
+<p align="center"><img src="./img/security-rugpull-v1.png" align="middle" /></p>
 
 **官网**：[BinSchoolApp](https://binschool.app)
 
