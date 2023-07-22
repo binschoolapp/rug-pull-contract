@@ -1,6 +1,6 @@
 # 土狗合约:&nbsp;&nbsp;&nbsp;&nbsp;01.概述 
 
-本章讲解 **土狗合约** 的基本原理和常见欺诈手段。
+本章讲解 **土狗合约** 的基本原理和常见的欺诈手段。
 
 **视频**：[Bilibili](https://www.bilibili.com/video/BV1mu411V7zx)  |  [Youtube](https://youtu.be/rlfpZaeFXmo)
 <p align="center"><img src="./img/security-rugpull-v1.png" align="middle" /></p>
