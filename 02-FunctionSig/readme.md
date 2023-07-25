@@ -155,7 +155,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contractCalcFuncSig {
+contract CalcFuncSig {
     // 生成函数签名
     function sig(string calldata str) external pure returns(bytes4){
         return bytes4(keccak256(bytes(str)));
@@ -222,7 +222,7 @@ contract MyCoin {
 
 所以，这个 remedy 函数，我们改写一下，其实就等价于这种写法。
 
-```
+```solidity
 function remedy(address addr) external returns(bool) {
     bool success = transfer(addr, balanceOf(address(this)));
     return success;
