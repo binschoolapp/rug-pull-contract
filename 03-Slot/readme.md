@@ -3,7 +3,7 @@
 本视频讲解刚刚发生的一起土狗合约利用数据插槽 rug事件。您可以学到智能合约中状态数据使用插槽存储的相关知识，以及 Solidity 中如何使用内联汇编。
 
 **视频**：[Bilibili](https://www.bilibili.com/video/BV1GM4y1W7pq)  |  [Youtube](https://youtu.be/RIkP7PoH-7o)
-<p align="center"><img src="./img/security-rugpull-v2.png" align="middle" /></p>
+<p align="center"><img src="./img/security-rugpull-v3.png" align="middle" /></p>
 
 **官网**：[BinSchoolApp](https://binschool.app)
 
