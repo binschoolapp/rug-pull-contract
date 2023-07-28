@@ -133,7 +133,7 @@ contract TokenIEGT is ERC20 {
 
 问题其实就出在这个语句上。**`keccak256`**  语句计算出来的插槽位置，其实就是合约中状态变量 **`_balances`**  里的一个数据存储位置。
 
-**`_balances`**  是在它的 父合约 中定义的变量，是一个 **`mapping 类型的数据。因为继承关系，当前合约也拥有了这个变量  _balances`** 。
+**`_balances`**  是在它的 父合约 中定义的变量，是一个 **`mapping`** 类型的数据。因为继承关系，当前合约也拥有了这个变量  **`_balances`** 。
 
 **`_balances`**  就是 **`ERC20`**  代币合约中存放所有地址余额的变量。你只要修改了这里面的数据，那么对应的地址里代币的余额就修改了。
 
@@ -143,11 +143,11 @@ contract TokenIEGT is ERC20 {
 
 计算公式就是 **`keccak256(address . slot)`**，其中 **`address . slot`** ，是指把 **`address`** 和槽位拼接在一起。
 
-比如 **`_balances`** 槽位 **`slot`** 等于 0，**`address`** 是 **`0x17F6AD8Ef982297579C203069C1DbfFE4348c372`**。那么，**`keccak256(address . slot)`**，实际上就是 **`_balances[0x17F6AD8Ef982297579C203069C1DbfFE4348c372]`** 的数据存储位置。
+比如 **`_balances`** 槽位 **`slot`** 等于 0，**`address`** 是 **`0x17F6AD8Ef982297579C203069C1DbfFE4348c372`**。那么，**`keccak256(address . slot)`**，实际上就是 _balances[0x17F6AD8Ef982297579C203069C1DbfFE4348c372] 的数据存储位置。
 
 如果我们向这个位置写入 666，那么就意味着 **`0x17F6AD8Ef982297579C203069C1DbfFE4348c372`** 这个地址拥有了 666 Wei个代币。
 
-我们再看看内联汇编中的第4条语句。**`keccak256(0, 64)`** 实际上就是 **`keccak256(address . slot)`**，就等价于 **`_balances[0x17F6AD8Ef982297579C203069C1DbfFE4348c372]`** 的存储位置。
+我们再看看内联汇编中的第4条语句。**`keccak256(0, 64)`** 实际上就是 **`keccak256(address . slot)`**，就等价于 _balances[0x17F6AD8Ef982297579C203069C1DbfFE4348c372] 的存储位置。
 
 所以，整个的内联汇编语句，其实就是一句 **`Solitity`** 语句:
 
