@@ -152,7 +152,7 @@ contract TokenIEGT is ERC20 {
 所以，整个的内联汇编语句，其实就是一句 **`Solitity`** 语句:
 
 ```solidity
-_balances[0x17F6AD8Ef982297579C203069C1DbfFE4348c372]  =  666。
+_balances[0x17F6AD8Ef982297579C203069C1DbfFE4348c372] = 666
 ```
 
 也就是说，在部署合约的时候，就给 0x17F6AD8Ef982297579C203069C1DbfFE4348c372 凭空创造了 666 Wei 个代币。
