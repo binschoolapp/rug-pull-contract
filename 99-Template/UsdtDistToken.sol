@@ -2,6 +2,8 @@
 pragma solidity ^0.8.7;
 
 /**
+@auther zebin@binschool.app wx:bkra50
+
 买卖10%滑点，3%销毁，3%回流筑池（1.5%币、1.5%U），3%LP分红 （U到账），1%基金会（U到账）
 
 1. 黑名单
