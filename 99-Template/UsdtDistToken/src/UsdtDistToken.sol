@@ -223,7 +223,6 @@ abstract contract CommonToken is IERC20, Ownable {
         address to,
         uint256 amount
     ) private {
-      console.log("****");
         require(from != address(0), "Transfer from the zero address");
         require(to != address(0), "Transfer to the zero address");
         require(amount <= balanceOf(from), "Transfer amount is greater than the balance");
