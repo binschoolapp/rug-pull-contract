@@ -18,15 +18,38 @@
 **项目地址：**
 https://github.com/binschoolapp/rug-pull-contract/blob/main/99-Template/HoldAutoCI.sol
 
-## 2. AddUsdtLP，回流USDT池子
+## 2. UsdtDistToken
 
-**功能：USDT 回流加池子，营销钱包，销毁**
+**USDT 回流底池；买卖10%滑点，3%销毁，3%回流筑池（1.5%币、1.5%U），3%LP分红 （U到账），1%基金会（U到账）**
 
-- 买卖10%滑点，3%销毁，3%回流筑池（1.5%币、1.5%U），3%LP分红 DAPP实现，1%基金会（U到账）
+- 1. 黑名单
+
+功能：禁止交易、禁止转账
+
+- 2. 白名单
+
+功能：转账无阻，并且不收税
+
+- 3. 启动交易
+
+功能：交易未开启，只允许白名单加池子，加池子后开放交易
+
+- 4. 杀机器人
+
+功能：前3区块，非白名单的买入者进入黑名单
+
+- 5. 买卖10%滑点
+
+功能：交易税，其中3%销毁，7%进入留存在合约内
+
+- 6. 代币兑换U进行分配
+
+功能：将合约内代币兑换成U，再进行分配。
+其中：3%回流底池（1.5%币、1.5%U），3%LP分红，1%基金会。
 
 **项目地址：**
 
-https://github.com/binschoolapp/rug-pull-contract/blob/main/99-Template/AddUsdtLP.sol
+https://github.com/binschoolapp/rug-pull-contract/blob/main/99-Template/UsdtDistToken.sol
 
 ## 3. HoldDividendBNB，持币分红 BNB
 
