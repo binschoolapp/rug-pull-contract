@@ -1,252 +1,392 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "forge-std/console.sol";
 
-/**
-@author zebin@binschool.app wx:bkra50
-*/
-
-// 元交易处理
 abstract contract Context {
-    function _msgSender() internal view virtual returns (address) {
-        return msg.sender;
-    }
-    function _msgData() internal view virtual returns (bytes calldata) {
-        return msg.data;
-    }
-    function _contextSuffixLength() internal view virtual returns (uint256) {
-        return 0;
-    }
+  function _msgSender() internal view virtual returns (address) {
+    return msg.sender;
+  }
+
+  function _msgData() internal view virtual returns (bytes calldata) {
+    return msg.data;
+  }
+
+  function _contextSuffixLength() internal view virtual returns (uint256) {
+    return 0;
+  }
 }
 
-// 合约所有权管理
 abstract contract Ownable is Context {
-    address private _owner;
+  address private _owner;
 
-    error OwnableUnauthorizedAccount(address account);
-    error OwnableInvalidOwner(address owner);
+  error OwnableUnauthorizedAccount(address account);
+  error OwnableInvalidOwner(address owner);
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    constructor(address initialOwner) {
-        if (initialOwner == address(0)) {
-            revert OwnableInvalidOwner(address(0));
-        }
-        _transferOwnership(initialOwner);
+  constructor(address initialOwner) {
+    if (initialOwner == address(0)) {
+      revert OwnableInvalidOwner(address(0));
     }
+    _transferOwnership(initialOwner);
+  }
 
-    modifier onlyOwner() {
-        _checkOwner();
-        _;
-    }
+  modifier onlyOwner() {
+    _checkOwner();
+    _;
+  }
 
-    function owner() public view virtual returns (address) {
-        return _owner;
-    }
+  function owner() public view virtual returns (address) {
+    return _owner;
+  }
 
-    function _checkOwner() internal view virtual {
-        if (owner() != _msgSender()) {
-            revert OwnableUnauthorizedAccount(_msgSender());
-        }
+  function _checkOwner() internal view virtual {
+    if (owner() != _msgSender()) {
+      revert OwnableUnauthorizedAccount(_msgSender());
     }
+  }
  
-    function renounceOwnership() public virtual onlyOwner {
-        _transferOwnership(address(0));
-    }
+  function renounceOwnership() public virtual onlyOwner {
+    _transferOwnership(address(0));
+  }
 
-    function transferOwnership(address newOwner) public virtual onlyOwner {
-        if (newOwner == address(0)) {
-            revert OwnableInvalidOwner(address(0));
-        }
-        _transferOwnership(newOwner);
+  function transferOwnership(address newOwner) public virtual onlyOwner {
+    if (newOwner == address(0)) {
+      revert OwnableInvalidOwner(address(0));
     }
+    _transferOwnership(newOwner);
+  }
 
-    function _transferOwnership(address newOwner) internal virtual {
-        address oldOwner = _owner;
-        _owner = newOwner;
-        emit OwnershipTransferred(oldOwner, newOwner);
-    }
+  function _transferOwnership(address newOwner) internal virtual {
+    address oldOwner = _owner;
+    _owner = newOwner;
+    emit OwnershipTransferred(oldOwner, newOwner);
+  }
 }
 
-// ERC20接口标准
 interface IERC20 {
-    function totalSupply() external view returns (uint256);
-    function balanceOf(address account) external view returns (uint256);
-    function transfer(address recipient, uint256 amount) external returns (bool);
-    function allowance(address owner, address spender) external view returns (uint256);
-    function approve(address spender, uint256 amount) external returns (bool);
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+  function totalSupply() external view returns (uint256);
+  function balanceOf(address account) external view returns (uint256);
+  function transfer(address recipient, uint256 amount) external returns (bool);
+  function allowance(address owner, address spender) external view returns (uint256);
+  function approve(address spender, uint256 amount) external returns (bool);
+  function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-// ERC20错误定义标准
 interface IERC20Errors {
-    error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
-    error ERC20InvalidSender(address sender);
-    error ERC20InvalidReceiver(address receiver);
-    error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
-    error ERC20InvalidApprover(address approver);
-    error ERC20InvalidSpender(address spender);
+  error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
+  error ERC20InvalidSender(address sender);
+  error ERC20InvalidReceiver(address receiver);
+  error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
+  error ERC20InvalidApprover(address approver);
+  error ERC20InvalidSpender(address spender);
 }
 
-// PancakeSwap路由接口
+library Math {
+  function min(uint x, uint y) internal pure returns (uint z) {
+    z = x < y ? x : y;
+  }
+
+  function sqrt(uint y) internal pure returns (uint z) {
+    if (y > 3) {
+      z = y;
+      uint x = y / 2 + 1;
+      while (x < z) {
+        z = x;
+        x = (y / x + x) / 2;
+      }
+    } else if (y != 0) {
+      z = 1;
+    }
+  }
+}
+
 interface ISwapRouter {
-    function factory() external pure returns (address);
+  function factory() external pure returns (address);
+  function WETH() external pure returns (address);
+  function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+    uint256 amountIn,
+    uint256 amountOutMin,
+    address[] calldata path,
+    address to,
+    uint256 deadline
+  ) external;
+  function swapExactTokensForETHSupportingFeeOnTransferTokens(
+    uint256 amountIn,
+    uint256 amountOutMin,
+    address[] calldata path,
+    address to,
+    uint256 deadline
+  ) external;
 }
 
 interface ISwapFactory {
     function createPair(address tokenA, address tokenB) external returns (address pair);
+    function feeTo() external view returns (address);
+
 }
 
 interface ISwapPair {
     function totalSupply() external view returns (uint256);
     function balanceOf(address account) external view returns (uint256);
     function sync() external;
+    function token0() external view returns (address);
+    function token1() external view returns (address);
+    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
+    function kLast() external view returns (uint256);
 }
 
-// 主合约
+interface IWBNB {
+    function deposit() external payable;
+}
+
+interface IDistributor {
+  function distributeMiner() external returns(bool);
+  function distributeLP() external returns(bool);
+}
+
+contract TokenReservoir {
+}
+
 contract JDCC is Context, IERC20, IERC20Errors, Ownable {
-    // 代币数量
-    uint256 private constant TOTAL_SUPPLY = 1_000_000*10**18; // 发行总量
-    uint256 private constant MINING_POOL_SUPPLY = 500_000*10**18;  // 矿池预留量
-    uint256 private constant INITIAL_POOL_SUPPLY = 250_000*10**18; // 初始底池量
-    uint256 private constant BLACK_HOLE_SUPPLY = 250_000*10**18; // 销毁量
-    uint256 private constant LP_PROMOTION_SUPPLY = 100_000*10**18;  // LP推广福利
+  // mint supply
+  uint256 private constant TOTAL_SUPPLY = 310_000 ether; 
+  uint256 private constant MAX_BUY_LIMIT = 300 ether;
 
-    // 交易费用
-    uint256 public fundFee = 100; // 营销钱包 1%
-    uint256 public poolFee = 50; // 回流底池 0.5%
-    uint256 public lpRewardFee = 50; // lp分红 0.5%
-    uint256 public burnFee = 100; // 交易销毁 1%
+  // trade tax
+  uint256 private _burnFee = 150; 
+  uint256 private _lpRewardFee = 50; 
+  uint256 private _poolFee = 50; 
+  uint256 private _fundFee = 100;
+  uint256 private _insureFee = 50;
+  uint256 private _fundFeeExtra = 2600;
 
-    // BSC地址 
-    ISwapRouter public immutable swapRouter;
-    address public immutable swapToken;
+  // swap
+  ISwapRouter private immutable swapRouter; 
+  address public immutable mainPair;
+  
+  address public immutable swapRouterAddress;
+  address public immutable wbnbAddress;
+  
+  // reward 
+  address public immutable poolReservoir; // for pool
+  address public immutable lpDistributor; // for lp
 
-    // BSC PancakeSwap 路由: 0x10ED43C718714eb63d5aA57B78B54704E256024E;
-    // BSC USDT 地址: 0x55d398326f99059fF775485246999027B3197955;
-    // BSC WBNB 地址: 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c;
+  // erc20
+  mapping(address account => uint256) private _balances;
+  mapping(address account => mapping(address spender => uint256)) private _allowances;
+  string private _name;
+  string private _symbol;
+  uint8 private _decimals;
+  uint256 private _totalSupply;
 
-    // 运营地址
-    address public immutable mainPair; // 交易对地址
-    address public immutable promotionAddress; // LP推广福利地址
-    address public immutable poolAddress; // 底池地址
+  uint256 private _startTime; 
+  uint256 private _totalSupplyLP;
     
-    // ERC20 变量
-    mapping(address account => uint256) private _balances;
-    mapping(address account => mapping(address spender => uint256)) private _allowances;
-    string private _name;
-    string private _symbol;
-    uint8 private _decimals;
-    uint256 private _totalSupply;
+  // start switch
+  bool public start;
+  function startRun() external onlyOwner(){
+    uint256 currentTime = block.timestamp;
+    _startTime = currentTime;
+    _lastDeflationTime = currentTime;
+    _lastMinerTime = currentTime;
+    _lastLpTime = currentTime;
+    _lastLPSwapTime = currentTime;
+    _lastIndependentTime = currentTime; 
+    start = true;   
+  }
+  
+  function stopRun() external onlyOwner(){
+    start = false;   
+  }
 
-    // 内部变量 
-    uint256 private _startTime;    // 合约部署时间
+  // safety lock
+  bool private locked; 
+  modifier nonReentrant() {
+    locked = true;
+    _;
+    locked = false;
+  }
 
-    // 防止重入攻击
-    bool private locked; 
-    modifier nonReentrant() {
-        require(!locked, "Function locked");
-        locked = true;
-        _;
-        locked = false;
+   constructor() Ownable(msg.sender) payable {
+      // erc20
+      _name = "JDCC";
+      _symbol = "JDCC";
+      _decimals = 18;
+
+      // task timer
+      uint256 currentTime = block.timestamp;
+      _startTime = currentTime;
+      _lastDeflationTime = currentTime;
+      _lastMinerTime = currentTime;
+      _lastLpTime = currentTime;
+      _lastLPSwapTime = currentTime;
+      _lastIndependentTime = currentTime; 
+
+      // mint token
+      address sender = _msgSender();
+      _mint(sender, TOTAL_SUPPLY - MINING_P1_AMOUNT);
+      _mint(address(this), MINING_P1_AMOUNT); 
+
+      // create swap pair
+      // chainid 56 for mainnet, 97 for testnet
+      swapRouterAddress = block.chainid == 56? 
+          0x10ED43C718714eb63d5aA57B78B54704E256024E : 0xD99D1c33F9fC3444f8101754aBC46c52416550D1; 
+      swapRouter = ISwapRouter(swapRouterAddress);
+      wbnbAddress = swapRouter.WETH();
+      mainPair = ISwapFactory(swapRouter.factory()).createPair(address(this), wbnbAddress);
+
+      // approve all the token contract allowances to swap router
+      _allowances[address(this)][address(swapRouter)] = type(uint256).max;
+
+      // create pool contract to save tax of the trade
+      poolReservoir = address(new TokenReservoir());
+      _allowances[poolReservoir][address(this)] = type(uint256).max;
+
+      // create distributor contract to reward lp
+      lpDistributor = address(new TokenReservoir());
+      _allowances[lpDistributor][address(this)] = type(uint256).max;
+
+      // whitelist for free trade
+      whitelist[sender] = true;
+      whitelist[address(this)] = true;
+      whitelist[poolReservoir] = true;
+      whitelist[lpDistributor] = true;
     }
 
-   constructor(
-    address _swapRouterAddress, // pancak路由
-    address _swapToken, // 兑换代币
-    address _poolAddress, // 底池预留
-    address _promotionAddress // lp推广预留
-    ) Ownable(msg.sender) {
-        swapRouter = ISwapRouter(_swapRouterAddress);
-        swapToken = _swapToken;
-        poolAddress = _poolAddress;
-        promotionAddress = _promotionAddress;
+    event DistMinerToOrg(bool);
+    event DistMinerToLP(bool);
 
-        uint256 currentTime = block.timestamp;
-        _startTime = currentTime;
-        lastDividendTime = currentTime;
+    event AddLPLog(bool, address, address);
+    event RemoveLPLog(bool, address, address, address, uint256);
+    function _transfer(address from, address to, uint256 amount) private  {
+      if (from == address(0)) {
+        revert ERC20InvalidSender(address(0));
+      }
+      if (to == address(0)) {
+          revert ERC20InvalidReceiver(address(0));
+      }
+      uint256 fromBalance = _balances[from];
+      if (fromBalance < amount) {
+          revert ERC20InsufficientBalance(from, fromBalance, amount);
+      }
 
-        _name = "JDCC Coin";
-        _symbol = "JDCC";
-        _decimals = 18;
+      if (from == fundAddress || from == fundReservoirAddress) {
+        _update(from, to, amount);
+        return;
+      }
 
-        // 铸造分配代币
-        _mint(address(this), TOTAL_SUPPLY); 
-        _update(address(this), poolAddress, INITIAL_POOL_SUPPLY); // 分配给初始池子
-        _update(address(this), promotionAddress, LP_PROMOTION_SUPPLY); // 分配给LP推广福利
-        _burn(address(this), BLACK_HOLE_SUPPLY); // 销毁
+      address sender = _msgSender();
+      if (to == mainPair && sender == swapRouterAddress) {
+        if (blacklist[from]) {
+          revert("in the blacklist");
+        }
 
-        // 创建交易对，并授权路由
-        mainPair = ISwapFactory(swapRouter.factory()).createPair(address(this), swapToken);
-        _allowances[address(this)][address(swapRouter)] = type(uint256).max; // 将合约内代币全部授权给Swap路由
+        (bool added, ) = _addLiquidity(amount);
+        if(added) {
+          if(lpSet[from].account == address(0)) {
+            User memory userNew = User(from, false);
+            lpList.push(from);
+            lpSet[from] = userNew;
+          }
+        }
+        emit AddLPLog(added,from,sender);
+      } else if (from == mainPair && sender == mainPair) {
+        (bool removed,) = _removeLiquidity(amount);
+        uint256 lpBalance = IERC20(mainPair).balanceOf(to);
+        emit RemoveLPLog(removed, from, sender, to, lpBalance);
+        if (removed) {
+          if (isInitLp(to) || lpSet[to].account == address(0)) {
+            _burn(from, amount);
+            return;
+          }
+        }
+      }
+
+      uint256 currentTime = block.timestamp;
+      bool executed;
+      if (start) {
+        if (from != mainPair) {
+          executed = _deflate(currentTime);
+        } 
+
+        if (!executed && from != mainPair) {
+          executed = _swapLPTokensForWBNB(currentTime);
+        }
+  
+        if (!executed && from != mainPair) {
+          executed = _processMinerDividend(currentTime);
+        }
+      
+        if (!executed && from != mainPair) {
+          executed = _processLpDividend(currentTime);
+        }
+
+        if (!executed && from != mainPair) {
+          if (fundAddress != address(0) && currentTime - _lastIndependentTime > INDEPENDENT_DIVIDEND_FREQ) {
+              executed = IDistributor(fundAddress).distributeMiner();
+              emit DistMinerToOrg(executed);
+            if (!executed) {
+              executed = IDistributor(fundAddress).distributeLP();
+              emit DistMinerToLP(executed);
+            }
+          }
+        }
+      }
+
+      // calculate transaction tax calculations, and add or remove liquidity
+      uint256 feeAmount;
+      if (from == mainPair || to == mainPair) {
+        require(start, "not start");
+
+        uint256 passedTime = currentTime - _startTime;
+
+        // // purchase limit within 2 hours after going online
+        // if( !whitelist[from] && !whitelist[to] ) {
+        //   if (passedTime < 2 hours && from == mainPair && amount > MAX_BUY_LIMIT ) {
+        //     revert("exceeded maximum buy amount");
+        //   }
+        // }
+
+        // prevent plummeting within 24 hours after going online
+        if (passedTime < 24 hours && to == mainPair && enableSellLimit && amount > maxSellAmount ) {
+          revert("exceeded maximum sell amount");
+        }
+
+        feeAmount = _calcFee(from, to, amount);
+      }
+
+      _update(from, to, amount - feeAmount);
     }
 
-    function _transfer(address from, address to, uint256 amount) private nonReentrant {
-        if (from == address(0)) {
-            revert ERC20InvalidSender(address(0));
-        }
-        if (to == address(0)) {
-            revert ERC20InvalidReceiver(address(0));
-        }
-        uint256 fromBalance = _balances[from];
-        if (fromBalance < amount) {
-            revert ERC20InsufficientBalance(from, fromBalance, amount);
-        }
+    function _calcFee(address from, address to, uint256 amount) private returns(uint256){
+      if (whitelist[from] || whitelist[to]) {
+        return 0;
+      }
 
-        uint256 currentTime = block.timestamp;
+      uint256 burnAmount = amount * _burnFee / 10000;
+      _burn(from, burnAmount);
 
-        // 上线24小时内限购50枚
-        // from == mainPair 买入
-        if (currentTime - _startTime < 24 hours && from == mainPair && amount > 50*10**18) {
-            revert("exceeded maximum buy amount");
-        }
+      uint256 fundAmount = amount * _fundFee / 10000;
+      _update(from, fundReservoirAddress, fundAmount);
 
-        // 防止暴跌
-        // to == mainPair 卖出
-        if (enableSellLimit && to == mainPair && amount > maxSellAmount) {
-            revert("exceeded maximum sell amount");
-        }
+      uint256 fundAmountExtra;
+      if (block.timestamp - _startTime < 2 hours && to == mainPair) {
+        fundAmountExtra = amount * _fundFeeExtra / 10000;
+        _update(from, fundAddress, fundAmountExtra);
+      }
 
-        // 交易税处理
-        uint256 feeAmount;
-        // from == mainPair 买入; to == mainPair 卖出
-        if ((from == mainPair || to == mainPair) && amount > 0) {
-            // 营销钱包
-            uint256 fundAmount = amount * fundFee / 10000;
-            _balances[promotionAddress] += fundAmount;
-            // 回流底池
-            uint256 poolAmount = amount * poolFee / 10000;
-            _balances[poolAddress] += poolAmount;
-            // lp分红
-            uint256 lpRewardAmount = amount * lpRewardFee / 10000;
-            _balances[address(this)] += lpRewardAmount; 
-            // 销毁
-            uint256 burnAmount = amount * burnFee / 10000;
-            _balances[address(0)] += burnAmount;
+      uint256 poolAmount = amount * _poolFee / 10000;
+      _update(from, poolReservoir, poolAmount);
 
-            // 扣除交易费
-            feeAmount = fundAmount + poolAmount + lpRewardAmount + burnAmount;
-            _balances[from] -= feeAmount;
-        }
+      uint256 lpRewardAmount = amount * _lpRewardFee / 10000;
+      _update(from, lpDistributor, lpRewardAmount);
 
-        // 转账交易
-        _update(from, to, amount - feeAmount);
-
-        // 底池自动通缩
-        if (enableAutoDeflation && currentTime >= lastDeflationTime + deflationFrequency) {
-            _autoDeflation(currentTime);
-        }
-
-        // 维护lp名单
-        _manageLpList(from, to);
-
-        // lp挖矿奖励
-        if (enableDividend && currentTime >= lastDividendTime + 24 hours) {
-           _execLpDividend(currentTime);
-        }
+      uint256 insureAmount = amount * _insureFee / 10000;
+      _update(from, insureAddress, insureAmount);
+      
+      return fundAmount + fundAmountExtra + poolAmount + lpRewardAmount + burnAmount + insureAmount;
     }
 
     function name() public view returns (string memory) {
@@ -365,237 +505,472 @@ contract JDCC is Context, IERC20, IERC20Errors, Ownable {
         }
     }
 
-    // 防暴跌机制
-    bool public enableSellLimit; // 是否启动卖出限制
-    uint256 public maxSellAmount; // 最大卖出数量
+    // liquidity event
+    event AddLiquidity(uint256 amount);
+    event RemoveLiquidity(uint256 amount);
 
-    // 启动或停止卖出限制
+    function _addLiquidity(uint256 amount) private returns (bool added, uint256 liquidity){
+        (uint256 rOther, uint256 rThis, uint256 balanceOther) = _getReserves();
+        uint256 amountOther;
+        if (rOther > 0 && rThis > 0) {
+            amountOther = amount * rOther / rThis;
+        }
+        if (balanceOther >= rOther + amountOther) {
+            (liquidity,) = calLiquidity(balanceOther, amount, rOther, rThis);
+            if(liquidity > 0) {
+              added = true;
+            }
+            _totalSupplyLP += liquidity;
+            emit AddLiquidity(_totalSupplyLP);
+        }
+    }
+
+    function _removeLiquidity(uint256 amount) private returns (bool removed, uint256 liquidity){
+        (uint256 rOther, uint256 rThis, uint256 balanceOther) = _getReserves();
+        uint256 amountOther;
+        bool added;
+        if (rOther > 0 && rThis > 0) {
+            amountOther = amount * rOther / rThis;
+        }
+        if (balanceOther >= rOther + amountOther) {
+            added = true;
+        }
+
+        ISwapPair swapPair = ISwapPair(mainPair);
+        uint256 totalSupplyLP = swapPair.totalSupply();
+        if(totalSupplyLP != _totalSupplyLP) {
+          if(!added) removed = true;
+          liquidity = totalSupplyLP;
+          _totalSupplyLP = totalSupplyLP;
+          emit RemoveLiquidity(totalSupplyLP);
+        }
+    }
+    
+    function calLiquidity(uint256 balanceA, uint256 amount, uint256 r0,uint256 r1) 
+        private view returns (uint256 liquidity, uint256 feeToLiquidity) {
+        uint256 pairTotalSupply = ISwapPair(mainPair).totalSupply();
+        address feeTo = ISwapFactory(swapRouter.factory()).feeTo();
+        bool feeOn = feeTo != address(0);
+        uint256 _kLast = ISwapPair(mainPair).kLast();
+        if (feeOn) {
+            if (_kLast != 0) {
+                uint256 rootK = Math.sqrt(r0 * r1);
+                uint256 rootKLast = Math.sqrt(_kLast);
+                if (rootK > rootKLast) {
+                    uint256 numerator;
+                    uint256 denominator;
+                    if (swapRouterAddress == address(0x10ED43C718714eb63d5aA57B78B54704E256024E)) {// BSC Pancake
+                        numerator = pairTotalSupply * (rootK - rootKLast) * 8;
+                        denominator = rootK * 17 + (rootKLast * 8);
+                    } else if (swapRouterAddress == address(0xD99D1c33F9fC3444f8101754aBC46c52416550D1)) {//BSC testnet Pancake
+                        numerator = pairTotalSupply * (rootK - rootKLast);
+                        denominator = rootK * 3 + rootKLast;
+                    } else if (swapRouterAddress == address(0xE9d6f80028671279a28790bb4007B10B0595Def1)) {//PG W3Swap
+                        numerator = pairTotalSupply * (rootK - rootKLast) * 3;
+                        denominator = rootK * 5 + rootKLast;
+                    } else {//SushiSwap,UniSwap,OK Cherry Swap
+                        numerator = pairTotalSupply * (rootK - rootKLast);
+                        denominator = rootK * 5 + rootKLast;
+                    }
+                    feeToLiquidity = numerator / denominator;
+                    if (feeToLiquidity > 0) pairTotalSupply += feeToLiquidity;
+                }
+            }
+        }
+        uint256 amount0 = balanceA - r0;
+        if (pairTotalSupply == 0) {
+            liquidity = Math.sqrt(amount0 * amount) - 1000;
+        } else {
+            liquidity = Math.min(
+                (amount0 * pairTotalSupply) / r0,
+                (amount * pairTotalSupply) / r1
+            );
+        }
+    }
+
+    function _getReserves() private view returns (uint256 rOther, uint256 rThis, uint256 balanceOther){
+        (rOther, rThis) = __getReserves();
+        balanceOther = IERC20(wbnbAddress).balanceOf(mainPair);
+    }
+
+    function __getReserves() private view returns (uint256 rOther, uint256 rThis){
+        ISwapPair swapPair = ISwapPair(mainPair);
+        (uint r0, uint256 r1,) = swapPair.getReserves();
+
+        address tokenOther = wbnbAddress;
+        if (tokenOther < address(this)) {
+            rOther = r0;
+            rThis = r1;
+        } else {
+            rOther = r1;
+            rThis = r0;
+        }
+    }
+
+    address public fundAddress;
+    function setFundAddess(address _fundAddress) external onlyOwner(){
+      fundAddress = _fundAddress;   
+    }
+    
+    address public fundReservoirAddress;
+    function setFundReservoirAddress(address _fundReservoirAddress) external onlyOwner(){
+      fundReservoirAddress = _fundReservoirAddress;   
+    }
+
+    address public insureAddress; 
+    function setInsureAddress(address _insureAddress) external onlyOwner(){
+       insureAddress = _insureAddress;   
+    }
+
+    // to set init lp
+    function setInitLP(address[] memory accounts) external onlyOwner {
+        uint256 len = accounts.length;
+        for (uint256 i=0; i<len; i++) {
+            address account = accounts[i];
+            User storage user = lpSet[account];
+            if (user.account == address(0)) {
+              User memory userNew = User(account,true);
+              lpList.push(account);
+              lpSet[account] = userNew;
+            } else {
+              if (!user.isInit) {
+                user.isInit = true;
+              }
+            }
+        }
+    }
+
+    mapping(address => bool) public blacklist;
+    function setBlacklist(address account, bool enable) external onlyOwner {
+        blacklist[account] = enable;
+    }
+
+    mapping(address => bool) public whitelist; 
+    function setWhitelist(address account, bool enable) external onlyOwner {
+        whitelist[account] = enable;
+    }
+
+    // prevent plummeting
+    bool public enableSellLimit; 
+    uint256 public maxSellAmount;
     function setEnableSellLimit(bool _enableSellLimit) external onlyOwner{
         enableSellLimit = _enableSellLimit;
     }
-    // 设置最大卖出数量
     function setMaxSellAmount(uint256 _maxSellAmount) external onlyOwner{
         maxSellAmount = _maxSellAmount;
     }
 
-    // 自动通缩机制
-    bool public enableAutoDeflation = false; // 启动自动通缩
-    uint256 private deflationFrequency = 1 hours; // 收缩频率：每小时1次
-    uint256 private deflationPercent = 100; // 通缩率：1%
-    uint256 public lastDeflationTime; // 最新一次通缩时间
+    // assigned to institution
+    uint256 private constant INDEPENDENT_DIVIDEND_FREQ = 10 minutes;
+    uint256 private _lastIndependentTime;
 
-    event AutoDeflation();
+    // unilateral deflation
+    uint256 private constant DEFLATION_MIN = 5513 ether;
+    uint256 private constant DEFLATION_FREQ = 1 hours;
+    uint256 private _lastDeflationTime; 
+    event Deflation(uint256 amount);
 
-    function setEnableAutoDeflation(bool _enableAutoDeflation) external onlyOwner {
-        enableAutoDeflation = _enableAutoDeflation;
-        lastDeflationTime = block.timestamp;
+    function _deflate(uint256 currentTime) private nonReentrant returns(bool) {
+      if (currentTime - _lastDeflationTime < DEFLATION_FREQ) {
+        return false;
+      }
+      uint256 poolReservoirBalance = balanceOf(poolReservoir);
+      uint totalAmount = balanceOf(mainPair) + poolReservoirBalance;
+      if(totalAmount <= DEFLATION_MIN) {
+        _lastDeflationTime = currentTime;
+        return false;
+      }
+
+      uint256 passedSeconds = currentTime - _lastDeflationTime;
+      uint256 passedHours = passedSeconds / DEFLATION_FREQ;
+      if(passedHours > 3) {
+        passedHours = 3;
+      }
+      uint256 rate = _getDeflationRate(passedSeconds);
+      if (rate == 0 ){
+        _lastDeflationTime = currentTime;
+        return false;
+      }
+
+      uint256 amountReserved = totalAmount;
+      for (uint256 i=0; i<passedHours; i++) {
+        amountReserved = amountReserved * (1_000_000 - rate) / 1_000_000;
+        if (amountReserved < DEFLATION_MIN) {
+          amountReserved = DEFLATION_MIN;
+          break;
+        }
+      }
+      
+      uint256 amountToBurn = totalAmount - amountReserved;
+      if (amountToBurn == 0) {
+        _lastDeflationTime = currentTime;
+        return false;
+      }
+      if (poolReservoirBalance > 0) {
+        _update(poolReservoir, mainPair, poolReservoirBalance);
+      }
+      _burn(mainPair, amountToBurn);
+
+      ISwapPair pair = ISwapPair(mainPair);
+      pair.sync();
+      
+      _lastDeflationTime = currentTime;
+      emit Deflation(amountToBurn);
+      return true;
     }
 
-    // 自动通缩
-    function _autoDeflation(uint256 currentTime) private {
-        uint256 passedHours = (currentTime - lastDeflationTime) / deflationFrequency;
-        if( passedHours > 10) {
-          passedHours = 10;
-        }
-        lastDeflationTime = currentTime;
-
-        uint256 poolBalance = balanceOf(mainPair);
-        uint256 amountToBurn = 0;
-        for (uint256 i=0; i<passedHours; i++) {
-          amountToBurn += poolBalance * deflationPercent / 10000;
-          poolBalance -= amountToBurn;
-        }
-        if (amountToBurn > 0) {
-            _burn(mainPair, amountToBurn);
-        }
-
-        ISwapPair pair = ISwapPair(mainPair);
-        pair.sync();
-        emit AutoDeflation();
+    function _getDeflationRate(uint256 passedSeconds) private pure returns(uint256){
+      if (passedSeconds < 60 days ){ // 0.75%
+        return 7500;
+      } 
+      if (passedSeconds < 150 days){ // 0.375%
+        return 3750;
+      } 
+      if (passedSeconds < 240 days ){ // 0.1875%
+        return 1875;
+      } 
+      if (passedSeconds < 2200 days ){ // 0.0468%
+        return 468;
+      }
+      return 0;
     }
 
-    // lp分红机制
-    mapping(address => bool) private _lpSet; // 用于判断是否lp
-    address[] public lpList; // lp名单
-    address private _pendingLp; // 待确定lp
-    uint256 public lastDividendTime; // 最新一次分红时间
-    bool public enableDividend; // 分红标志
-
-    // 挖矿分配
-    uint256 private constant MINING_TOTAL_AMOUNT = 400_000*10**18; // 挖矿奖励总量
-
-    uint256 private constant MINING_P1_AMOUNT = 120_000*10**18; // 第1阶段时间    
-    uint256 private constant MINING_P1_DAYS = 60; // 第1阶段时间
-    uint256 private constant MINING_P1_RPD = 2_000*10**18; // 第1阶段每日分红
-
-    uint256 private constant MINING_P2_AMOUNT = 90_000*10**18; // 第2阶段时间   
-    uint256 private constant MINING_P2_DAYS = 90; // 第2阶段时间
-    uint256 private constant MINING_P2_RPD = 1_000*10**18; // 第2阶段每日分红
-
-    uint256 private constant MINING_P3_AMOUNT = 45_000*10**18; // 第2阶段时间  
-    uint256 private constant MINING_P3_DAYS = 90; // 第3阶段时间
-    uint256 private constant MINING_P3_RPD = 500*10**18; // 第3阶段每日分红
-
-    uint256 private constant MINING_P4_DAYS = 1960; // 第4阶段时间
-    uint256 private constant MINING_P4_RPD = 74*10**18; // 第4阶段每日分红
-
-    function setEnableDividend(bool _enableDividend) external onlyOwner {
-        if (_enableDividend) {
-          lastDividendTime = block.timestamp;
-        }
-        enableDividend = _enableDividend;
+    // miner reward
+    struct User {
+      address account;
+      bool isInit; // is startup
     }
 
-    function lpCount() external view returns (uint256) {
+    uint256 private constant DIVIDEND_MINER_FREQ = 1 days;
+    uint256 private constant DIVIDEND_MINER_PEROID = 1 days;
+    
+    address[] public lpList;
+    mapping(address => User) public lpSet;
+
+    uint256 private _lastMinerTime;
+    uint256 private _lastMinerBalance;
+    uint256 private _lastMinerCount;
+    uint256 private _minerIndex;
+    uint256 private _lastLPMinerTotal;
+    event MinerDividend(uint256 lpCount, uint256 amount);
+    event MinerDividendRound(uint256 currentIndex);
+    
+    // reward 1 period
+    uint256 constant MINING_P1_AMOUNT = 12_000 ether; 
+    uint256 constant MINING_P1_DAYS = 60; 
+    uint256 constant MINING_P1_RPD = 200 ether;
+
+    function lpCount() public view returns (uint256) {
       return lpList.length;
     }
 
-    // 维护lp名单
-    function _manageLpList(address from,  address to) private {
-      address account = _pendingLp;
-      if (from == mainPair) {
-        _pendingLp = to;
-      } else if (to == mainPair) {
-        _pendingLp = from;
-      } else if (account != address(0)) {
-        _pendingLp = address(0);
-      }
-
-      if (account == address(0) ) {
-        return;
-      }
-
-      if (IERC20(mainPair).balanceOf(account) == 0) {
-          if (_lpSet[account]) {
-              _lpSet[account] = false;
-              for (uint i = 0; i < lpList.length; i++) {
-                  if (lpList[i] != account) {
-                      continue;
-                  }
-                  lpList[i] = lpList[lpList.length - 1];
-                  lpList.pop();
-                  break; 
-              }
-          }
-      } else {
-        if (!_lpSet[account]) {
-            _lpSet[account] = true;
-            lpList.push(account);
-        }
-      }
+    function isInitLp(address account) public view returns(bool){
+      return lpSet[account].isInit;
     }
 
-    // 计算当前分红量
-    function _calcDividend(uint256 currentTime) private view returns(uint256) {
-        if (currentTime <= lastDividendTime) {
+    uint256 public minMinerDividend = 100 ether;
+    function setMinMinerDividend(uint256 _minMinerDividend) external onlyOwner{
+      minMinerDividend = _minMinerDividend;
+    }
+
+    // number of acounts assigned in each round
+    uint256 public allocCountPerRound = 30;
+    function setAllocCountPerRound(uint256 _allocCountPerRound) external onlyOwner{
+      allocCountPerRound = _allocCountPerRound;
+    }
+    
+    function _calcMinerDividend() private view returns(uint256) {
+        uint256 balance = balanceOf(address(this));
+        if(balance < 1 ether) {
           return 0;
+        } else if(balance < MINING_P1_RPD) {
+          return balance;
         }
-
-        uint256 passedDays = (currentTime - lastDividendTime)/86400;
-        uint256 totalAmount = MINING_TOTAL_AMOUNT;
-        if (passedDays <= MINING_P1_DAYS) {
-            uint passedAmount = passedDays * MINING_P1_RPD;
-            return balanceOf(address(this)) - (totalAmount - passedAmount);
-        }
-        totalAmount -= MINING_P1_AMOUNT;
-        passedDays -= MINING_P1_DAYS;
-        if (passedDays <= MINING_P2_DAYS) {
-            uint256 passedAmount = passedDays * MINING_P2_RPD;
-            return balanceOf(address(this)) - (totalAmount - passedAmount);
-        }
-        totalAmount -= MINING_P2_AMOUNT;
-        passedDays -= MINING_P2_DAYS;
-
-        if (passedDays <= MINING_P3_DAYS) {
-            uint passedAmount = passedDays * MINING_P3_RPD;
-            return balanceOf(address(this)) - (totalAmount - passedAmount);
-        }
-        totalAmount -= MINING_P3_AMOUNT;
-        passedDays -= MINING_P3_DAYS;
-      
-        if (passedDays < MINING_P4_DAYS) {
-            uint passedAmount = passedDays * MINING_P4_RPD;
-            return balanceOf(address(this)) - (totalAmount - passedAmount);
-        }
-        return balanceOf(address(this));
+        return MINING_P1_RPD;
     }
 
-    // 执行lp挖矿分红
-    function _execLpDividend(uint256 currentTime) private {
-        uint256 totalAmount = _calcDividend(currentTime);
-        if (totalAmount == 0) {
-            return;
-        }
-        lastDividendTime = currentTime; 
+    function _processMinerDividend(uint256 currentTime) private nonReentrant returns(bool) {
+      if (currentTime - _lastMinerTime < DIVIDEND_MINER_FREQ) {
+        return false;
+      }
 
-        uint256 totalSupplyPair = IERC20(mainPair).totalSupply();
-        for (uint i = 0; i < lpList.length; i++) {
-            address lp = lpList[i];
-            uint amountPair = IERC20(mainPair).balanceOf(lp);
-            uint amount = totalAmount * (amountPair * 100 / totalSupplyPair) / 100;
-            _update(address(this), lp, amount);
+      uint256 passedDays = (currentTime - _startTime)/ DIVIDEND_MINER_PEROID;
+      if(passedDays > MINING_P1_DAYS + 30) {
+        return false;
+      }
+
+      uint256 currentLPCount = lpList.length;
+      if (_minerIndex == 0) {
+        uint256 totalBalance = _calcMinerDividend();
+        if (totalBalance < minMinerDividend){
+          return false;
         }
+     
+        uint totalBalanceLP = IERC20(mainPair).totalSupply();
+        if (totalBalanceLP == 0 || currentLPCount == 0) {
+          _update(address(this), fundAddress, totalBalance);
+          emit MinerDividend(currentLPCount, totalBalance);
+          return false;
+        }
+     
+        uint256 fundAmount = totalBalance * 20 / 100;
+        _lastMinerCount = currentLPCount;
+        _lastMinerBalance = totalBalance - fundAmount;
+        _lastLPMinerTotal = totalBalanceLP;
+
+        emit MinerDividend(currentLPCount, totalBalance);
+        _update(address(this), fundAddress, fundAmount);
+      }
+
+      uint256 lastTotalBalance = _lastMinerBalance;
+      uint256 totalCount = _lastMinerCount < currentLPCount?_lastMinerCount:currentLPCount;
+
+      uint256 count = 0;
+      for (uint256 i=_minerIndex; i<totalCount;) {
+        address account = lpList[i];
+        uint256 lpBalance = IERC20(mainPair).balanceOf(account);
+        uint amount = lastTotalBalance * (lpBalance * 1_000_000 / _lastLPMinerTotal) / 1_000_000;
+        if (amount > 0) {
+          uint bal = balanceOf(address(this));
+          if(bal < amount) {
+            _minerIndex = 0;
+            _lastMinerTime = currentTime;
+            return true;
+          }
+          _update(address(this), account, amount);
+        }
+        i++;
+        _minerIndex = i;
+        count++;
+        if (count >= allocCountPerRound) {
+          break;
+        }
+      }
+      emit MinerDividendRound(_minerIndex);
+      if(_minerIndex < totalCount) {
+        return true;
+      }
+      _minerIndex = 0;
+      _lastMinerTime = currentTime;
+      return true;
+    }
+
+    // lp reward swap
+    uint256 private constant DIVIDEND_SWAP_FREQ = 25 minutes;
+    uint256 private _lastLPSwapTime; 
+    event LpSwap(uint256 amount);
+
+    function _swapLPTokensForWBNB(uint256 currentTime) private nonReentrant returns(bool) {
+      if (currentTime - _lastLPSwapTime < DIVIDEND_SWAP_FREQ) {
+        return false;
+      }
+
+      uint256 tokenAmount = balanceOf(lpDistributor);
+      if (tokenAmount < 10 ether) {
+        _lastLPSwapTime = currentTime;
+        return false;
+      }
+
+      _update(lpDistributor, address(this), tokenAmount);
+      address[] memory path = new address[](2);
+      path[0] = address(this);
+      path[1] = wbnbAddress;
+      swapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
+          tokenAmount,
+          0,
+          path,
+          address(this),
+          block.timestamp
+      );
+      _lastLPSwapTime = currentTime;
+      emit LpSwap(tokenAmount);
+      return true;
+    }
+
+    uint256 public minLpDividend = 4 ether;
+    function setMinLpDividend(uint256 _minLpDividend) external onlyOwner{
+      minLpDividend = _minLpDividend;
+    }
+
+    // lp reward distribution
+    uint256 private constant DIVIDEND_LP_FREQ = 1 days;
+    uint256 private _lastLpTime;
+    uint256 private _lastLpBalance;
+    uint256 private _lastLpCount;
+    uint256 private _lpIndex;
+    uint256 private _lastLPRewardTotal;
+    event LpDividend(uint256 lpCount, uint256 amount);
+    event LPDividendRound(uint256 currentIndex);
+
+    function _processLpDividend(uint256 currentTime) private nonReentrant returns(bool) {
+      if (currentTime - _lastLpTime < DIVIDEND_LP_FREQ) {
+        return false;
+      }
+   
+      uint256 currentLPCount = lpList.length;
+      if (_lpIndex == 0) {
+        uint256 totalBalance = IERC20(wbnbAddress).balanceOf(address(this));
+        if (totalBalance < minLpDividend){
+          return false;
+        }
+
+        _lastLpBalance = totalBalance;
+        _lastLpCount = currentLPCount;
+        if (_lastLpCount == 0) {
+          return false;
+        }
+
+        _lastLPRewardTotal = IERC20(mainPair).totalSupply();
+        if (_lastLPRewardTotal == 0) {
+          return false;
+        }
+        emit LpDividend(currentLPCount, totalBalance);
+      }
+
+      uint256 lastTotalBalance = _lastLpBalance;
+      uint256 totalCount = _lastLpCount < currentLPCount?_lastLpCount:currentLPCount;
+
+      uint256 count = 0;
+      for (uint256 i=_lpIndex; i<totalCount;) {
+        address account = lpList[i];
+        uint256 lpBalance = IERC20(mainPair).balanceOf(account);
+        uint amount = lastTotalBalance * (lpBalance * 1_000_000 / _lastLPRewardTotal) / 1_000_000;
+        if (amount > 0) {
+          uint bal = IERC20(wbnbAddress).balanceOf(address(this));
+          if(bal < amount) {
+            _lpIndex = 0;
+            _lastLpTime = currentTime;
+            return true;
+          }
+          IERC20(wbnbAddress).transfer(account, amount);
+        }
+        i++;
+        _lpIndex = i;
+        count++;
+        if (count >= allocCountPerRound) {
+          break;
+        }
+      }
+      emit LPDividendRound(_lpIndex);
+      if(_lpIndex < totalCount) {
+        return true;
+      }
+      _lpIndex = 0;
+      _lastLpTime = currentTime;
+      return true;
+    }
+
+    function withdrawToken(address to) external onlyOwner {
+      uint256 amount = balanceOf(address(this));
+      require(amount > 0, "No tokens to withdraw");
+      _transfer(address(this), to, amount);
+    }
+
+    function withdrawWBNB(address to) external onlyOwner {
+      IERC20(wbnbAddress).transfer(to,IERC20(wbnbAddress).balanceOf(address(this)));
+    }
+
+    receive() external payable {
+      IWBNB(wbnbAddress).deposit{value: msg.value}();
     }
 }
-
-/*
-=======usage=====
-1. 部署提供4个地址：
-   constructor(
-    address _swapRouterAddress, // pancak路由
-    address _swapToken, // 兑换代币
-    address _poolAddress, // 底池预留
-    address _promotionAddress // lp推广预留
-    )
-其中： 
-_swapRouterAddress = 0x10ED43C718714eb63d5aA57B78B54704E256024E //pancak路由
-_swapToken = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c; //WBNB
-_poolAddress // 底池预留,用于添加流动性，由项目方提供
-_promotionAddress // lp推广预留，由项目方提供
-
-2. 防止暴跌   
- // 是否启动卖出限制，管理员使用
-  setEnableSellLimit(bool _enableSellLimit) external onlyOwner
-  // 设置最大卖出数量，管理员使用
-   setMaxSellAmount(uint256 _maxSellAmount) external onlyOwner
-  两个函数配合使用。
-
-3. 底池单边通缩
-  // 是否启用单边通缩，管理员使用
-  setEnableAutoDeflation(bool _enableAutoDeflation) external onlyOwner
-  
-4. 底池单边通缩
-  // 是否启用分红机制，管理员使用
-   setEnableDividend(bool _enableDividend) external onlyOwner
-   
-
-=======require=====
-    《JDCC数字资产》
-    总发行量：100万枚
-    其中矿池（预留用于挖矿）：50万枚
-    黑洞：25万枚
-    初始池子：25万枚
-
-
-    挖矿分四个周期（50万枚）：
-    第一期：60天2000枚/每天
-    第二期：90天 1000枚/每天
-    第三期：90天   500枚/每天
-    第四期：每天74枚1960天
-
-    剩余10万 用于LP推广福利
-
-    初始池子25万枚：由5000位有格局有共识基础的社区长联合坐庄而搭建的流动池，撤池币销毁，留下USDT！
-
-    正常滑点
-    买卖：交易税3% 
-    其中1%销毁打入黑洞 
-    0.5% LP分红
-    0.5回流底池1%营销，
-
-    底池每小时单边通缩1%进入黑洞。
-    上线24小时限购每个帐户最多50枚！
-
-    防爆跌机制！
-    币价跌幅是多少滑点就是多少
-*/

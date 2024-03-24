@@ -91,3 +91,19 @@ https://github.com/binschoolapp/rug-pull-contract/blob/main/99-Template/RebaseDi
 
 https://github.com/binschoolapp/rug-pull-contract/blob/main/ERC20/LPDividend.sol
 
+## 6. JDCC
+
+**功能：**
+- 交易对：币+BNB
+- 设置白名单，上线24小时内白名单有优先抢购资格，其它人也可以购买，所有人限购200个
+- 防暴跌机制：跌多少滑点就多少，权限丢弃之后不再生效
+- 黑名单功能：黑名单用户不可以买卖
+- 买卖：交易税4%
+- 上线前2个小时内卖出的交易税30%，两个小时后恢复正常4%
+- 其中
+- 1.5%销毁打入黑洞 
+- 0.5% LP分红 （分BNB，达到10万U分）
+- 0.5回流底池
+- 1%营销（单独钱包接收）
+- 0.5%.保护基金使用 （单独钱包接收）
+
