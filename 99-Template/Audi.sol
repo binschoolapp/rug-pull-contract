@@ -1,5 +1,5 @@
 /**
- *Submitted for verification at BscScan.com on 2024-02-25
+ *https://bscscan.com/token/0xeff30d1a4f97ac3f37b27b260df662b45b5f5188
 */
 
 // SPDX-License-Identifier: MIT
