@@ -107,3 +107,15 @@ https://github.com/binschoolapp/rug-pull-contract/blob/main/ERC20/LPDividend.sol
 - 1%营销（单独钱包接收）
 - 0.5%.保护基金使用 （单独钱包接收）
 
+## 7. JDCC
+
+**功能：**
+- 池子已锁，权限已丢，公平发射，无预售，单地址永久限购最大总量的1%
+- 交易时间冷却一分钟，杜绝一切科学家｜机器人｜夹子
+- 销毁机制：底池燃烧（24小时燃烧6%），买卖通缩（各2%），收益回购销毁
+- 买入只需要转BNB到合约地址
+- 卖出只需要转btc-314到合约地址
+- 合约地址：0xd67651af90113e66e314ca615ebff154e9fb7ef6
+- 交易看线：https://longswap.app/swap
+
+
