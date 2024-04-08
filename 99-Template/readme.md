@@ -107,7 +107,7 @@ https://github.com/binschoolapp/rug-pull-contract/blob/main/ERC20/LPDividend.sol
 - 1%营销（单独钱包接收）
 - 0.5%.保护基金使用 （单独钱包接收）
 
-## 7. JDCC
+## 7. Bip314
 
 **功能：**
 - 池子已锁，权限已丢，公平发射，无预售，单地址永久限购最大总量的1%
